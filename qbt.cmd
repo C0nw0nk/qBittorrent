@@ -34,22 +34,23 @@ TITLE C0nw0nk - Automatic qBittorrent Script
 SET root_path=%~dp0
 set torrent_file=torrent.txt
 set cookie_jar=\cookies.txt
+set vbs_script=\time1.vbs
 
 rem Remove existing cookie jar
 del /F %temp%%cookie_jar% 2>nul
 rem Remove existing torrent list
-del /F %root_path%%torrent_file%
+del /F %root_path%%torrent_file% 2>nul
 
 rem Login to qBittorrent
-curl -s -b %temp%\cookies.txt -c %temp%\cookies.txt --header "Referer: %webUI%" --data "username=%username%&password=%password%" %webUI%/api/v2/auth/login >nul
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
 
-curl -s -b "%temp%\cookies.txt" -c "%temp%\cookies.txt" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info" | %root_path%jq.exe -r | findstr """hash""" > %root_path%%torrent_file%
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info" | %root_path%jq.exe -r | findstr """hash""" > %root_path%%torrent_file%
 
-echo WScript.Echo(DateDiff("s", "01/01/1970 00:00:00", Now())) > %temp%\time1.vbs
+echo WScript.Echo(DateDiff("s", "01/01/1970 00:00:00", Now())) > %temp%%vbs_script%
 for /f "tokens=*" %%a in ('
-cscript //nologo %temp%\time1.vbs
+cscript //nologo %temp%%vbs_script%
 ') do set current_time=%%a
-del %temp%\time1.vbs
+del %temp%%vbs_script% 2>nul
 
 set "File=%root_path%%torrent_file%"
 set /a count=0
@@ -67,7 +68,7 @@ For /L %%i in (1,1,%Count%) Do (
 rem Remove used cookie jar
 del /F %temp%%cookie_jar% 2>nul
 rem Remove existing torrent list
-del /F %root_path%%torrent_file%
+del /F %root_path%%torrent_file% 2>nul
 
 rem pause
 
@@ -89,7 +90,7 @@ rem echo %torrent_%
 
 rem last time torrent seen completed
 for /f "tokens=*" %%a in ('
-curl -s -b "%temp%\cookies.txt" -c "%temp%\cookies.txt" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """seen_complete"""
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """seen_complete"""
 ') do set torrent_last_complete=%%a
 set "torrent_last_complete=!torrent_last_complete:seen_complete=!"
 set "torrent_last_complete=!torrent_last_complete:"=!"
@@ -100,21 +101,21 @@ echo %torrent_last_complete%
 echo("%torrent_last_complete%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo numeric||echo not numeric && EXIT /b
 IF %torrent_last_complete% LEQ 0 (
 echo it is 0
-curl -s -b "%temp%\cookies.txt" -c "%temp%\cookies.txt" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
 EXIT /b
 )
 set /a "torrent_compare_date=%current_time%-%last_seen_complete_days_in_seconds%"
 IF %torrent_last_complete% NEQ 0 (
 IF %torrent_last_complete% LEQ %torrent_compare_date% (
 echo Completed torrent file is older than 30 days so deleting the torrent
-curl -s -b "%temp%\cookies.txt" -c "%temp%\cookies.txt" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
 EXIT /b
 )
 )
 
 rem number of seeds in swarm
 for /f "tokens=*" %%a in ('
-curl -s -b "%temp%\cookies.txt" -c "%temp%\cookies.txt" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """num_complete"""
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """num_complete"""
 ') do set torrent_seeds=%%a
 set "torrent_seeds=!torrent_seeds:num_complete=!"
 set "torrent_seeds=!torrent_seeds:"=!"
@@ -125,7 +126,7 @@ echo %torrent_seeds%
 echo("%torrent_seeds%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo numeric||echo not numeric && EXIT /b
 IF %torrent_seeds% LEQ 0 (
 echo it is 0
-curl -s -b "%temp%\cookies.txt" -c "%temp%\cookies.txt" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
 EXIT /b
 )
 
@@ -144,7 +145,7 @@ set /a "torrent_compare_date=%current_time%-%days_in_seconds%"
 IF %torrent_completion_on% NEQ 0 (
 IF %torrent_completion_on% LEQ %torrent_compare_date% (
 echo Completed torrent file is older than 3 days so deleting the torrent
-curl -s -b "%temp%\cookies.txt" -c "%temp%\cookies.txt" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
 EXIT /b
 )
 )
