@@ -10,3 +10,14 @@ Automatically delete completed torrents older than X number of days
 Automatically delete torrents with no seeders
 
 Automatically delete torrents that have never been seen completed
+
+# Setup
+
+qBittorrent WebUI Login is all you need to turn on / enable in your qBittorrent settings in order to use this script
+
+# Settings
+
+https://github.com/C0nw0nk/qBittorrent/blob/main/qbt.cmd#L10
+
+To run this Automatically open `command prompt` and `RUN COMMAND PROMPT AS ADMINISTRATOR` and use the following command :
+`SCHTASKS /CREATE /SC HOURLY /TN "Cons qBittorrent Script" /RU "SYSTEM" /TR "C:\Windows\System32\cmd.exe /c start /B "C:\qbt\qbt.cmd"`
