@@ -143,11 +143,17 @@ echo %torrent_completion_on%
 echo("%torrent_completion_on%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo numeric||echo not numeric && EXIT /b
 set /a "torrent_compare_date=%current_time%-%days_in_seconds%"
 IF %torrent_completion_on% NEQ 0 (
+::If torrent complete then pause it to save bandwidth
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/pause?hashes=%torrent_%"
 IF %torrent_completion_on% LEQ %torrent_compare_date% (
 echo Completed torrent file is older than 3 days so deleting the torrent
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
 EXIT /b
 )
+) ELSE (
+:: Force start download on all torrent
+::TODO FIX THIS SO IT ACTUALY WORKS SOMETHING WRONG WITH POST REQUESTS
+rem curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" -X POST -F "hashes=%torrent_%" --header "User-Agent: Fiddler" --header "Content-Type: application/x-www-form-urlencoded" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/setForceStart"
 )
 
 exit /b
