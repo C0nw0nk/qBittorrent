@@ -13,6 +13,8 @@ Automatically delete torrents that have never been seen completed
 
 Automatically pause completed torrents to save bandwidth to stop seeding them
 
+Automatically force start downloading torrents that have not completely downloaded
+
 # Setup
 
 qBittorrent WebUI Login is all you need to turn on / enable in your qBittorrent settings in order to use this script
