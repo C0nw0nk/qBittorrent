@@ -62,7 +62,7 @@ for /F "tokens=* delims=" %%a in ('Type "%File%"') do (
 
 For /L %%i in (1,1,%Count%) Do (
 	Call :Action "!output[%%i]!"
-	rem pause
+rem	pause
 )
 
 rem Remove used cookie jar
@@ -152,8 +152,7 @@ EXIT /b
 )
 ) ELSE (
 :: Force start download on all torrent
-::TODO FIX THIS SO IT ACTUALY WORKS SOMETHING WRONG WITH POST REQUESTS
-rem curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" -X POST -F "hashes=%torrent_%" --header "User-Agent: Fiddler" --header "Content-Type: application/x-www-form-urlencoded" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/setForceStart"
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --data "hashes=%torrent_%" --data "value=true" --header "Content-Type: application/x-www-form-urlencoded" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/setForceStart"
 )
 
 exit /b
