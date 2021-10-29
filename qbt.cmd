@@ -86,7 +86,54 @@ set "torrent_=!torrent_:"=!"
 set "torrent_=!torrent_:,=!"
 set "torrent_=!torrent_::=!"
 set "torrent_=!torrent_: =!"
-rem echo %torrent_%
+echo Hash: %torrent_%
+
+rem get torrent ETA
+for /f "tokens=*" %%a in ('
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """eta"""
+') do set torrent_eta=%%a
+set "torrent_eta=!torrent_eta:eta=!"
+set "torrent_eta=!torrent_eta:"=!"
+set "torrent_eta=!torrent_eta:,=!"
+set "torrent_eta=!torrent_eta::=!"
+set "torrent_eta=!torrent_eta: =!"
+echo ETA: %torrent_eta%
+
+rem torrent progress stuck at 99.X% fix
+for /f "tokens=*" %%a in ('
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """progress"""
+') do set torrent_progress=%%a
+set "torrent_progress=!torrent_progress:progress=!"
+set "torrent_progress=!torrent_progress:"=!"
+set "torrent_progress=!torrent_progress:,=!"
+set "torrent_progress=!torrent_progress::=!"
+set "torrent_progress=!torrent_progress: =!"
+rem echo progress %torrent_progress%
+
+echo WScript.Echo(FormatPercent(%torrent_progress%/1)) > %temp%%vbs_script%
+for /f "tokens=*" %%a in ('
+cscript //nologo %temp%%vbs_script%
+') do set progress_percent=%%a
+del %temp%%vbs_script% 2>nul
+
+set "progress_percent=.!progress_percent:%%=!"
+FOR %%a IN (%progress_percent%) DO FOR %%b IN (%%~na) DO SET "progress_percent_a=%%~xb" && SET "progress_percent_b=%%~xa"
+set "progress_percent_a=!progress_percent_a:.=!"
+set "progress_percent_b=!progress_percent_b:.=!"
+rem echo progress is %progress_percent_a% and %progress_percent_b%
+set progress_percent=%progress_percent_a%%progress_percent_b%
+
+:: less than 100%
+IF %progress_percent% LSS 10000 (
+:: more than 99%
+IF %progress_percent% GTR 9900 (
+:: infinite
+IF %torrent_eta% EQU 8640000 (
+echo we need to force recheck of torrent infinite stuck at 99.X%
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/recheck?hashes=%torrent_%"
+)
+)
+)
 
 rem last time torrent seen completed
 for /f "tokens=*" %%a in ('
