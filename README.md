@@ -15,6 +15,8 @@ Automatically pause completed torrents to save bandwidth to stop seeding them
 
 Automatically force start downloading torrents that have not completely downloaded
 
+Automatically Fix for qBittorrent for torrents stuck infinitely at 99.X% when a torrent hits greater than >99% and it has infinite time remaining we need to force rechecking of the torrent to fix it
+
 # Setup
 
 qBittorrent WebUI Login is all you need to turn on / enable in your qBittorrent settings in order to use this script
