@@ -108,7 +108,7 @@ echo Hash: %torrent_%
 
 rem stop Blacklisted files from sneaking in via torrents
 for /f "tokens=*" %%a in ('
-curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/files?hash=%torrent_%" ^| %root_path%jq.exe ^| findstr """index"""
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/files?hash=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """index"""
 ') do set torrent_clean_index_count=%%a
 set "torrent_clean_index_count=!torrent_clean_index_count:index=!"
 set "torrent_clean_index_count=!torrent_clean_index_count:"=!"
@@ -122,10 +122,9 @@ set /a torrent_clean_index_count=%torrent_clean_index_count%+1
 :loop
 
 for /f "tokens=*" %%a in ('
-curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/files?hash=%torrent_%&indexes=%loop%" ^| %root_path%jq.exe ^| findstr """name""" ^| findstr /R %blacklisted_filetypes%
-') do set torrent_clean_name=%%a
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/files?hash=%torrent_%&indexes=%loop%" ^| %root_path%jq.exe -r ^| findstr """name""" ^| findstr /R %blacklisted_filetypes%
+') do set torrent_clean_name=true
 IF NOT "%torrent_clean_name%"=="" (
-echo %torrent_clean_name%
 echo Blacklisted file type inside torrent so do not download this particular content file inside of the torrent file
 :: Do NOT Download particular file index
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --data "hash=%torrent_%" --data "id=%loop%" --data "priority=0" --header "Content-Type: application/x-www-form-urlencoded" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/filePrio"
