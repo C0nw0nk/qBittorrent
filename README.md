@@ -2,6 +2,19 @@
 
 qBittorrent Windows Automatic batch file command line script to check torrent for seeders if it has no seeders it will delete the torrent automatically I did not like the way there was no automation to the way qBittorent deals with torrent files so i built in a automatic process that will run every hour to deal with and clean up the torrents that get added.
 
+DONATE! The same as buying me a beer or a cup of tea/coffee :D <3
+
+PayPal : https://paypal.me/wimbledonfc
+
+https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZH9PFY62YSD7U&source=url
+
+Crypto Currency wallets :
+
+BTC BITCOIN : `3A7dMi552o3UBzwzdzqFQ9cTU1tcYazaA1`
+
+ETH ETHEREUM : `0xeD82e64437D0b706a55c3CeA7d116407E43d7257`
+
+SHIB SHIBA INU : `0x39443a61368D4208775Fd67913358c031eA86D59`
 
 # Script Features
 
@@ -16,6 +29,8 @@ Automatically pause completed torrents to save bandwidth to stop seeding them
 Automatically force start downloading torrents that have not completely downloaded
 
 Automatically Fix for qBittorrent for torrents stuck infinitely at 99.X% when a torrent hits greater than >99% and it has infinite time remaining we need to force rechecking of the torrent to fix it
+
+Automatically check torrents for blacklisted file types inside them like `.exe .cmd .bat` files etc
 
 # Setup
 
