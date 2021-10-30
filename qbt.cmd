@@ -9,6 +9,15 @@
 
 :: Script Settings
 
+:: IF you like my work please consider helping me keep making things like this
+:: DONATE! The same as buying me a beer or a cup of tea/coffee :D <3
+:: PayPal : https://paypal.me/wimbledonfc
+:: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZH9PFY62YSD7U&source=url
+:: Crypto Currency wallets :
+:: BTC BITCOIN : 3A7dMi552o3UBzwzdzqFQ9cTU1tcYazaA1
+:: ETH ETHEREUM : 0xeD82e64437D0b706a55c3CeA7d116407E43d7257
+:: SHIB SHIBA INU : 0x39443a61368D4208775Fd67913358c031eA86D59
+
 :: qBittorrent WebUI Login
 set username=admin
 set password=pass
@@ -24,6 +33,11 @@ set last_seen_complete_days_in_seconds=2592000
 
 :: Automatically delete torrents that have 0 seeders they will never download either
 
+:: Automatically fix torrents stuck at 99.X%
+
+:: Do not Download specific files inside of the torrent if they are blacklisted
+:: Seperate each file extension with a space that you want to blacklist
+set blacklisted_filetypes=".exe .txt .nfo .jpg .bmp .ico .cmd .bat .dll .py .vbs .readme"
 
 :: End Edit DO NOT TOUCH ANYTHING BELOW THIS POINT UNLESS YOU KNOW WHAT YOUR DOING!
 
@@ -45,6 +59,10 @@ rem Login to qBittorrent
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
 
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info" | %root_path%jq.exe -r | findstr """hash""" > %root_path%%torrent_file%
+
+rem settings torrents that get added are paused until force start by script this way this script gets to run its blacklist check to prevent blacklisted file types sneaking in inside of torrents
+set settings_start_paused_enabled=%%7B%%22start_paused_enabled%%22%%3Atrue%%7D
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --data "json=%settings_start_paused_enabled%" --header "Content-Type: application/x-www-form-urlencoded" --header "Referer: %webUI%" "%webUI%/api/v2/app/setPreferences"
 
 echo WScript.Echo(DateDiff("s", "01/01/1970 00:00:00", Now())) > %temp%%vbs_script%
 for /f "tokens=*" %%a in ('
@@ -87,6 +105,38 @@ set "torrent_=!torrent_:,=!"
 set "torrent_=!torrent_::=!"
 set "torrent_=!torrent_: =!"
 echo Hash: %torrent_%
+
+rem stop Blacklisted files from sneaking in via torrents
+for /f "tokens=*" %%a in ('
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/files?hash=%torrent_%" ^| %root_path%jq.exe ^| findstr """index"""
+') do set torrent_clean_index_count=%%a
+set "torrent_clean_index_count=!torrent_clean_index_count:index=!"
+set "torrent_clean_index_count=!torrent_clean_index_count:"=!"
+set "torrent_clean_index_count=!torrent_clean_index_count:,=!"
+set "torrent_clean_index_count=!torrent_clean_index_count::=!"
+set "torrent_clean_index_count=!torrent_clean_index_count: =!"
+echo %torrent_clean_index_count%
+
+set loop=0
+set /a torrent_clean_index_count=%torrent_clean_index_count%+1
+:loop
+
+for /f "tokens=*" %%a in ('
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/files?hash=%torrent_%&indexes=%loop%" ^| %root_path%jq.exe ^| findstr """name""" ^| findstr /R %blacklisted_filetypes%
+') do set torrent_clean_name=%%a
+IF NOT "%torrent_clean_name%"=="" (
+echo %torrent_clean_name%
+echo Blacklisted file type inside torrent so do not download this particular content file inside of the torrent file
+:: Do NOT Download particular file index
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --data "hash=%torrent_%" --data "id=%loop%" --data "priority=0" --header "Content-Type: application/x-www-form-urlencoded" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/filePrio"
+)
+
+set torrent_clean_name=
+set /a loop=%loop%+1 
+if "%loop%"=="%torrent_clean_index_count%" goto next
+goto loop
+
+:next
 
 rem get torrent ETA
 for /f "tokens=*" %%a in ('
