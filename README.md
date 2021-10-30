@@ -1,6 +1,6 @@
 # qBittorrent
 
-qBittorrent Windows Automatic batch file command line script to check torrent for seeders if it has no seeders it will delete the torrent automatically I did not like the way there was no automation to the way qBittorent deals with torrent files so i built in a automatic process that will run every hour to deal with and clean up the torrents that get added.
+qBittorrent Windows Automatic batch file command line script with many features
 
 DONATE! The same as buying me a beer or a cup of tea/coffee :D <3
 
