@@ -127,10 +127,11 @@ set "torrent_clean_index_count=!torrent_clean_index_count:"=!"
 set "torrent_clean_index_count=!torrent_clean_index_count:,=!"
 set "torrent_clean_index_count=!torrent_clean_index_count::=!"
 set "torrent_clean_index_count=!torrent_clean_index_count: =!"
-echo %torrent_clean_index_count%
+echo Number of files inside torrent: %torrent_clean_index_count%
 
 set loop=0
 set /a torrent_clean_index_count=%torrent_clean_index_count%+1
+set torrent_clean_name=
 :loop
 
 rem Login to qBittorrent
