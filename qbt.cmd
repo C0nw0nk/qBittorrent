@@ -37,7 +37,7 @@ set last_seen_complete_days_in_seconds=2592000
 
 :: Do not Download specific files inside of the torrent if they are blacklisted
 :: Seperate each file extension with a space that you want to blacklist
-set blacklisted_filetypes=".exe .txt .text .nfo .jpg .bmp .ico .png .gif .torrent .url .diz .ini .xml .sql .cmd .bat .dll .py .vbs .reg .html .htm .db .thumb .readme Sample sample. padding_file"
+set blacklisted_filetypes=".exe .txt .text .nfo .jpg .bmp .ico .png .gif .torrent .url .lnk .link .diz .ini .xml .sql .cmd .bat .dll .py .vbs .reg .html .htm .db .thumb .readme Sample sample. padding_file"
 
 :: End Edit DO NOT TOUCH ANYTHING BELOW THIS POINT UNLESS YOU KNOW WHAT YOUR DOING!
 
