@@ -50,6 +50,15 @@ set torrent_file=torrent.txt
 set cookie_jar=\cookies.txt
 set vbs_script=\time1.vbs
 
+echo WScript.Echo(DateDiff("s", "01/01/1970 00:00:00", Now())) > %temp%%vbs_script%
+for /f "tokens=*" %%a in ('
+cscript //nologo %temp%%vbs_script%
+') do set dynamic_time=%%a
+del %temp%%vbs_script% 2>nul
+
+set torrent_file=%torrent_file%_%dynamic_time%.txt
+set cookie_jar=%cookie_jar%_%dynamic_time%.txt
+
 rem Remove existing cookie jar
 del /F %temp%%cookie_jar% 2>nul
 rem Remove existing torrent list
@@ -106,6 +115,9 @@ set "torrent_=!torrent_::=!"
 set "torrent_=!torrent_: =!"
 echo Hash: %torrent_%
 
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 rem stop Blacklisted files from sneaking in via torrents
 for /f "tokens=*" %%a in ('
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/files?hash=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """index"""
@@ -120,6 +132,9 @@ echo %torrent_clean_index_count%
 set loop=0
 set /a torrent_clean_index_count=%torrent_clean_index_count%+1
 :loop
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
 
 for /f "tokens=*" %%a in ('
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/files?hash=%torrent_%&indexes=%loop%" ^| %root_path%jq.exe -r ^| findstr """name""" ^| findstr /R %blacklisted_filetypes%
@@ -138,6 +153,10 @@ goto loop
 :next
 
 rem get torrent ETA
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 for /f "tokens=*" %%a in ('
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """eta"""
 ') do set torrent_eta=%%a
@@ -149,6 +168,10 @@ set "torrent_eta=!torrent_eta: =!"
 echo ETA: %torrent_eta%
 
 rem torrent progress stuck at 99.X% fix
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 for /f "tokens=*" %%a in ('
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """progress"""
 ') do set torrent_progress=%%a
@@ -178,6 +201,9 @@ IF %progress_percent% LSS 10000 (
 IF %progress_percent% GTR 9900 (
 :: infinite
 IF %torrent_eta% EQU 8640000 (
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 echo we need to force recheck of torrent infinite stuck at 99.X%
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/recheck?hashes=%torrent_%"
 )
@@ -185,6 +211,10 @@ curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webU
 )
 
 rem last time torrent seen completed
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 for /f "tokens=*" %%a in ('
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """seen_complete"""
 ') do set torrent_last_complete=%%a
@@ -193,7 +223,7 @@ set "torrent_last_complete=!torrent_last_complete:"=!"
 set "torrent_last_complete=!torrent_last_complete:,=!"
 set "torrent_last_complete=!torrent_last_complete::=!"
 set "torrent_last_complete=!torrent_last_complete: =!"
-echo %torrent_last_complete%
+echo Torrent last seen complete: %torrent_last_complete%
 echo("%torrent_last_complete%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo numeric||echo not numeric && EXIT /b
 IF %torrent_last_complete% LEQ 0 (
 echo it is 0
@@ -204,12 +234,19 @@ set /a "torrent_compare_date=%current_time%-%last_seen_complete_days_in_seconds%
 IF %torrent_last_complete% NEQ 0 (
 IF %torrent_last_complete% LEQ %torrent_compare_date% (
 echo Completed torrent file is older than 30 days so deleting the torrent
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
 EXIT /b
 )
 )
 
 rem number of seeds in swarm
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 for /f "tokens=*" %%a in ('
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """num_complete"""
 ') do set torrent_seeds=%%a
@@ -218,35 +255,57 @@ set "torrent_seeds=!torrent_seeds:"=!"
 set "torrent_seeds=!torrent_seeds:,=!"
 set "torrent_seeds=!torrent_seeds::=!"
 set "torrent_seeds=!torrent_seeds: =!"
-echo %torrent_seeds%
+echo Torrent seeds: %torrent_seeds%
 echo("%torrent_seeds%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo numeric||echo not numeric && EXIT /b
 IF %torrent_seeds% LEQ 0 (
-echo it is 0
+echo Torrent seeds: 0
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
 EXIT /b
 )
 
 rem delete completed torrents older than X number of days
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
+set torrent_completion_on=
 for /f "tokens=*" %%a in ('
-curl -s -b "%temp%\cookies.txt" -c "%temp%\cookies.txt" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """completion_on"""
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info?hashes=%torrent_%" ^| %root_path%jq.exe -r ^| findstr """completion_on"""
 ') do set torrent_completion_on=%%a
 set "torrent_completion_on=!torrent_completion_on:completion_on=!"
 set "torrent_completion_on=!torrent_completion_on:"=!"
 set "torrent_completion_on=!torrent_completion_on:,=!"
 set "torrent_completion_on=!torrent_completion_on::=!"
 set "torrent_completion_on=!torrent_completion_on: =!"
-echo %torrent_completion_on%
-echo("%torrent_completion_on%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo numeric||echo not numeric && EXIT /b
+echo Torrent completion on: %torrent_completion_on%
+echo("%torrent_completion_on%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo numeric||echo not numeric meaning not yet finished downloading && EXIT /b
 set /a "torrent_compare_date=%current_time%-%days_in_seconds%"
+echo Compare date is: %torrent_compare_date%
 IF %torrent_completion_on% NEQ 0 (
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 ::If torrent complete then pause it to save bandwidth
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/pause?hashes=%torrent_%"
 IF %torrent_completion_on% LEQ %torrent_compare_date% (
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 echo Completed torrent file is older than 3 days so deleting the torrent
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
 EXIT /b
 )
 ) ELSE (
+
+rem Login to qBittorrent
+curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
+
 :: Force start download on all torrent
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --data "hashes=%torrent_%" --data "value=true" --header "Content-Type: application/x-www-form-urlencoded" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/setForceStart"
 )
