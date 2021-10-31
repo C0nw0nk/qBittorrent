@@ -30,7 +30,7 @@ Automatically force start downloading torrents that have not completely download
 
 Automatically Fix for qBittorrent for torrents stuck infinitely at 99.X% when a torrent hits greater than >99% and it has infinite time remaining we need to force rechecking of the torrent to fix it
 
-Automatically check torrents for blacklisted file types inside them like `.exe .cmd .bat` files etc
+Automatically check torrents for blacklisted file types inside them like `.exe .txt .text .nfo .jpg .bmp .ico .png .gif .torrent .url .lnk .link .diz .ini .xml .sql .cmd .bat .dll .py .vbs .reg .html .htm .db .thumb .readme Sample sample. padding_file` files etc
 
 # Setup
 
