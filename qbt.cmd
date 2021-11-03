@@ -41,6 +41,15 @@ set blacklisted_filetypes=".exe .txt .text .nfo .jpg .bmp .ico .png .gif .torren
 
 :: End Edit DO NOT TOUCH ANYTHING BELOW THIS POINT UNLESS YOU KNOW WHAT YOUR DOING!
 
+:start_loop
+if "%~1"=="" (
+start /wait /B qbt.cmd go
+) else (
+goto begin
+)
+goto start_loop
+:begin
+
 color 0A
 %*
 TITLE C0nw0nk - Automatic qBittorrent Script
