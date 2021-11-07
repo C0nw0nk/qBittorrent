@@ -79,7 +79,7 @@ curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webU
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/info" | %root_path%jq.exe -r | findstr """hash""" > %root_path%%torrent_file%
 
 rem settings torrents that get added are paused until force start by script this way this script gets to run its blacklist check to prevent blacklisted file types sneaking in inside of torrents
-set settings_start_paused_enabled=%%7B%%22start_paused_enabled%%22%%3Atrue%%7D
+set settings_start_paused_enabled=%%7B%%22start_paused_enabled%%22%%3Afalse%%7D
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --data "json=%settings_start_paused_enabled%" --header "Content-Type: application/x-www-form-urlencoded" --header "Referer: %webUI%" "%webUI%/api/v2/app/setPreferences"
 
 echo WScript.Echo(DateDiff("s", "01/01/1970 00:00:00", Now())) > %temp%%vbs_script%
@@ -105,8 +105,6 @@ rem Remove used cookie jar
 del /F %temp%%cookie_jar% 2>nul
 rem Remove existing torrent list
 del /F %root_path%%torrent_file% 2>nul
-
-rem pause
 
 Exit
 
@@ -192,6 +190,8 @@ set "torrent_progress=!torrent_progress::=!"
 set "torrent_progress=!torrent_progress: =!"
 rem echo progress %torrent_progress%
 
+echo("%torrent_progress%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo Torrent progress numeric||echo Torrent progress not numeric && EXIT /b
+
 echo WScript.Echo(FormatPercent(%torrent_progress%/1)) > %temp%%vbs_script%
 for /f "tokens=*" %%a in ('
 cscript //nologo %temp%%vbs_script%
@@ -234,7 +234,7 @@ set "torrent_last_complete=!torrent_last_complete:,=!"
 set "torrent_last_complete=!torrent_last_complete::=!"
 set "torrent_last_complete=!torrent_last_complete: =!"
 echo Torrent last seen complete: %torrent_last_complete%
-echo("%torrent_last_complete%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo numeric||echo not numeric && EXIT /b
+echo("%torrent_last_complete%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo Torrent last seen complete numeric||echo Torrent last seen complete not numeric && EXIT /b
 IF %torrent_last_complete% LEQ 0 (
 echo it is 0
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" "%webUI%/api/v2/torrents/delete?hashes=%torrent_%&deleteFiles=true"
@@ -266,9 +266,9 @@ set "torrent_seeds=!torrent_seeds:,=!"
 set "torrent_seeds=!torrent_seeds::=!"
 set "torrent_seeds=!torrent_seeds: =!"
 echo Torrent seeds: %torrent_seeds%
-echo("%torrent_seeds%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo numeric||echo not numeric && EXIT /b
+echo("%torrent_seeds%"|findstr "^[\"][-][1-9][0-9]*[\"]$ ^[\"][1-9][0-9]*[\"]$ ^[\"]0[\"]$">nul&&echo Torrent seeds numeric||echo Torrent seeds not numeric && EXIT /b
 IF %torrent_seeds% LEQ 0 (
-echo Torrent seeds: 0
+echo Torrent has no seeds: %torrent_seeds% so deleting
 
 rem Login to qBittorrent
 curl -s -b "%temp%%cookie_jar%" -c "%temp%%cookie_jar%" --header "Referer: %webUI%" --data "username=%username%&password=%password%" "%webUI%/api/v2/auth/login" >nul
