@@ -32,6 +32,12 @@ Automatically Fix for qBittorrent for torrents stuck infinitely at 99.X% when a 
 
 Automatically check torrents for blacklisted file types inside them like `.exe .txt .text .nfo .jpg .bmp .ico .png .gif .torrent .url .lnk .link .diz .ini .xml .sql .cmd .bat .dll .py .vbs .reg .html .htm .db .thumb .readme Sample sample. padding_file` files etc
 
+# Optional
+
+If you download compressed archives zip rar 7z gzip etc i did built a script to decompress those to so check it out.
+
+https://github.com/C0nw0nk/ExtractNow
+
 # Setup
 
 qBittorrent WebUI Login is all you need to turn on / enable in your qBittorrent settings in order to use this script
