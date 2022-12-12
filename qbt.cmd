@@ -43,7 +43,7 @@ set blacklisted_filetypes=".exe .txt .text .nfo .jpg .bmp .ico .png .gif .torren
 
 :start_loop
 if "%~1"=="" (
-start /wait /B qbt.cmd go
+start /wait /B "" "%~dp0%~nx0" go 2^>Nul
 ) else (
 goto begin
 )
